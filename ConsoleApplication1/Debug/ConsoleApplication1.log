@@ -1,0 +1,4 @@
+﻿  ConsoleApplication1.cpp
+C:\Users\kirik\source\repos\sterra\ConsoleApplication1\ConsoleApplication1\ConsoleApplication1.cpp(83,11): warning C4244: =: преобразование "double" в "int", возможна потеря данных
+C:\Users\kirik\source\repos\sterra\ConsoleApplication1\ConsoleApplication1\ConsoleApplication1.cpp(85,22): warning C4244: +=: преобразование "double" в "int", возможна потеря данных
+  ConsoleApplication1.vcxproj -> C:\Users\kirik\source\repos\sterra\ConsoleApplication1\Debug\ConsoleApplication1.exe
