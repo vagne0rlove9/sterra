@@ -17,25 +17,33 @@ Node* head;
 
 void addItem(int value)
 {
-	Node* node = new Node;
-	node->item = value;
-	if (head == NULL)
+	Node* node = new (nothrow) Node;
+	if (!node)
 	{
-		node->prev = NULL;
-		node->next = NULL;
-		head = node;
+		cout << "not enough memory";
 	}
 	else
 	{
-		Node* p = head;
-		while (p->next != NULL)
+		node->item = value;
+		if (head == NULL)
 		{
-			p = p->next;
+			node->prev = NULL;
+			node->next = NULL;
+			head = node;
 		}
-		p->next = node;
-		node->prev = p;
-		node->next = NULL;
+		else
+		{
+			Node* p = head;
+			while (p->next != NULL)
+			{
+				p = p->next;
+			}
+			p->next = node;
+			node->prev = p;
+			node->next = NULL;
+		}
 	}
+	
 }
 
 void print()
@@ -54,7 +62,14 @@ Node* delItem(Node* list)
 	prev = list->prev; 
 	next = list->next; 
 	if (prev != NULL)
-		prev->next = list->next; 
+	{
+		try {
+			prev->next = list->next;
+		}
+		catch (...) {
+			cout << "item was deleted";
+		}
+	}
 	if (next != NULL)
 		next->prev = list->prev; 
 	free(list);
@@ -101,7 +116,7 @@ int check(unsigned int n, int parametr)
 int main()
 {
 	srand((unsigned int)time(NULL));
-	int size = 7;
+	int size = 22;
 	for (int i = 0; i < size; i++)
 	{
 		addItem(rand()%10+1);
@@ -136,9 +151,9 @@ int main()
 			}
 
 		}
-#pragma omp barrier
-		head = NULL;
 	}
+	if (head != NULL)
+		head = NULL;
 	cout << endl << "0: " << k2 << "\n1: " << k1;
 	cout << endl << "count items from head: " << count2 << "\ncount items from tail: " << count1;
 	cout << endl << "count items: " << size;
