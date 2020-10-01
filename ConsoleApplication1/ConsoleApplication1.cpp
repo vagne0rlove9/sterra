@@ -5,6 +5,9 @@
 #include <ctime>
 #include <omp.h>
 #include <string.h>
+#include <pthread.h>
+#include <mutex>
+
 using namespace std;
 
 struct Node
@@ -14,6 +17,8 @@ struct Node
 	Node* next;
 };
 Node* head;
+
+mutex mut;
 
 void addItem(int value)
 {
@@ -61,6 +66,7 @@ Node* delItem(Node* list)
 	Node* prev, * next;
 	prev = list->prev; 
 	next = list->next; 
+	mut.lock();
 	if (prev != NULL)
 	{
 		try {
@@ -70,9 +76,8 @@ Node* delItem(Node* list)
 			cout << "item was deleted";
 		}
 	}
-	if (next != NULL)
-		next->prev = list->prev; 
 	free(list);
+	mut.unlock();
 	list = NULL;
 	return prev;
 }
@@ -81,13 +86,14 @@ Node* delHead()
 {
 	Node* temp;
 	temp = head->next;
+	mut.lock();
 	if (temp != NULL)
 		temp->prev = NULL;
 	free(head);
+	mut.unlock();
 	head = NULL;
 	return temp;
 }
-
 
 int check(unsigned int n, int parametr)
 {
@@ -113,10 +119,58 @@ int check(unsigned int n, int parametr)
 	return k;
 }
 
+int k1 = 0;
+int k2 = 0;
+
+struct Args {
+	int begin;
+	int end;
+	int id;
+};
+
+int countAllItems = 0;
+int countItems1 = 0;
+int countItems2 = 0;
+
+void *threadFunc(void* pargs)
+{
+	countAllItems ;
+	Node* tail = head;
+	Args *args = (Args*)pargs;
+	while (tail->next != NULL)
+	{
+		tail = tail->next;
+	}
+	Node* p = head;
+	for (int i = args->begin; i <= args->end; i++)
+	{
+		if (args->id == 0)
+		{
+			k1 += check(tail->item, 1);
+			countItems1++;
+			mut.lock();
+			countAllItems++;
+			mut.unlock();
+			tail = delItem(tail);
+		}
+		else
+		{
+			k2 += check(head->item, 0);
+			countItems2++;
+			mut.lock();
+			countAllItems++;
+			mut.unlock();
+			head = delHead();
+		}
+	}
+	
+	return NULL;
+}
+
 int main()
 {
 	srand((unsigned int)time(NULL));
-	int size = 22;
+	int size = 5;
 	for (int i = 0; i < size; i++)
 	{
 		addItem(rand()%10+1);
@@ -124,38 +178,37 @@ int main()
 	print();
 	int i;
 	cout << endl;
-	Node* tail = head;
-	while (tail->next != NULL)
+	pthread_t threads[2];
+	struct Args args[2];
+	double block = (double)size / 2;
+	for (i = 0; i < 2; i++)
 	{
-		tail = tail->next;
+		int begin = (int)(block * i) + 1;
+		int end = (int)(block * (i + 1));
+		args[i].begin = begin;
+		args[i].end = end;
+		args[i].id = i;
 	}
-	int k1 = 0, k2 = 0;
-	int count1 = 0, count2 = 0; 
-	Node* p = head;
-#pragma omp parallel num_threads(2)
-	{
-#pragma omp for private(i)
-		for (i = 0; i < size; i++)
-		{
-			if (omp_get_thread_num() == 0)
-			{
-				k1 += check(tail->item, 1);
-				count1++;
-				tail = delItem(tail);
-			}
-			else
-			{
-				k2 += check(head->item, 0);
-				count2++;
-				head = delHead();
-			}
-
+	for (i = 0; i < 2; i++) {
+		if (pthread_create(&threads[i], NULL, threadFunc, &args[i])) {
+			printf("Error: pthread_create failed!\n");
+			return 1;
 		}
+	}
+	for (i = 0; i < 2; i++) {
+		int fac = 1;
+		pthread_join(threads[i], NULL);
 	}
 	if (head != NULL)
 		head = NULL;
 	cout << endl << "0: " << k2 << "\n1: " << k1;
-	cout << endl << "count items from head: " << count2 << "\ncount items from tail: " << count1;
-	cout << endl << "count items: " << size;
+	cout << endl << "count items from tail: " << countItems1 << endl;
+	cout << "count items from head: " << countItems2 << endl;
+	if (countAllItems == size)
+	{
+		cout << endl << "all items are checked!";
+	} 
+	else cout << endl << countAllItems;
+	print();
 	return 0;
 }
