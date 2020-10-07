@@ -48,7 +48,7 @@ void addItem(int value)
 			node->next = NULL;
 		}
 	}
-	
+
 }
 
 void print()
@@ -63,36 +63,30 @@ void print()
 
 Node* delItem(Node* list)
 {
-	Node* prev, * next;
-	prev = list->prev; 
-	next = list->next; 
 	mut.lock();
+	Node* prev, * next;
+	prev = list->prev;
+	next = list->next;
 	if (prev != NULL)
 	{
-		try {
-			prev->next = list->next;
-		}
-		catch (...) {
-			cout << "item was deleted";
-		}
+		prev->next = list->next;
+		free(list);
+		list = NULL;
+		mut.unlock();
+		return prev;
+	}
+	if (next != NULL)
+	{
+		next->prev = NULL;
+		free(list);
+		list = NULL;
+		mut.unlock();
+		return next;
 	}
 	free(list);
-	mut.unlock();
 	list = NULL;
-	return prev;
-}
-
-Node* delHead()
-{
-	Node* temp;
-	temp = head->next;
-	mut.lock();
-	if (temp != NULL)
-		temp->prev = NULL;
-	free(head);
 	mut.unlock();
-	head = NULL;
-	return temp;
+	return NULL;
 }
 
 int check(unsigned int n, int parametr)
@@ -128,15 +122,13 @@ struct Args {
 	int id;
 };
 
-int countAllItems = 0;
 int countItems1 = 0;
 int countItems2 = 0;
 
-void *threadFunc(void* pargs)
+void* threadFunc(void* pargs)
 {
-	countAllItems ;
 	Node* tail = head;
-	Args *args = (Args*)pargs;
+	Args* args = (Args*)pargs;
 	while (tail->next != NULL)
 	{
 		tail = tail->next;
@@ -148,22 +140,16 @@ void *threadFunc(void* pargs)
 		{
 			k1 += check(tail->item, 1);
 			countItems1++;
-			mut.lock();
-			countAllItems++;
-			mut.unlock();
 			tail = delItem(tail);
 		}
 		else
 		{
 			k2 += check(head->item, 0);
 			countItems2++;
-			mut.lock();
-			countAllItems++;
-			mut.unlock();
-			head = delHead();
+			head = delItem(head);
 		}
 	}
-	
+
 	return NULL;
 }
 
@@ -173,7 +159,7 @@ int main()
 	int size = 5;
 	for (int i = 0; i < size; i++)
 	{
-		addItem(rand()%10+1);
+		addItem(rand() % 10 + 1);
 	}
 	print();
 	int i;
@@ -204,11 +190,11 @@ int main()
 	cout << endl << "0: " << k2 << "\n1: " << k1;
 	cout << endl << "count items from tail: " << countItems1 << endl;
 	cout << "count items from head: " << countItems2 << endl;
-	if (countAllItems == size)
+	if ((countItems1 + countItems2) == size)
 	{
 		cout << endl << "all items are checked!";
-	} 
-	else cout << endl << countAllItems;
+	}
+	else cout << endl << countItems1 + countItems2;
 	print();
 	return 0;
 }
