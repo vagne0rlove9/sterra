@@ -149,7 +149,6 @@ void* threadFunc(void* pargs)
 			head = delItem(head);
 		}
 	}
-
 	return NULL;
 }
 
@@ -184,12 +183,12 @@ void initThreads(int size)
 		int fac = 1;
 		pthread_join(threads[i], NULL);
 	}
+	if (head != NULL)
+		head = NULL;
 }
 
 void printResults(int size)
 {
-	if (head != NULL)
-		head = NULL;
 	cout << endl << "0: " << k2 << "\n1: " << k1;
 	cout << endl << "count items from tail: " << countItems1 << endl;
 	cout << "count items from head: " << countItems2 << endl;
@@ -203,7 +202,7 @@ void printResults(int size)
 void startApp() 
 {
 	srand((unsigned int)time(NULL));
-	int size = 5;
+	int size = 6;
 	initList(size);
 	printList();
 	initThreads(size);
