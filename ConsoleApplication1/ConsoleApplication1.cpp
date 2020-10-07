@@ -51,7 +51,7 @@ void addItem(int value)
 
 }
 
-void print()
+void printList()
 {
 	Node* p = head;
 	while (p != NULL)
@@ -153,21 +153,20 @@ void* threadFunc(void* pargs)
 	return NULL;
 }
 
-int main()
+void initList(int size) 
 {
-	srand((unsigned int)time(NULL));
-	int size = 5;
 	for (int i = 0; i < size; i++)
 	{
 		addItem(rand() % 10 + 1);
 	}
-	print();
-	int i;
-	cout << endl;
+}
+
+void initThreads(int size) 
+{
 	pthread_t threads[2];
 	struct Args args[2];
 	double block = (double)size / 2;
-	for (i = 0; i < 2; i++)
+	for (int i = 0; i < 2; i++)
 	{
 		int begin = (int)(block * i) + 1;
 		int end = (int)(block * (i + 1));
@@ -175,16 +174,20 @@ int main()
 		args[i].end = end;
 		args[i].id = i;
 	}
-	for (i = 0; i < 2; i++) {
+	for (int i = 0; i < 2; i++) {
 		if (pthread_create(&threads[i], NULL, threadFunc, &args[i])) {
 			printf("Error: pthread_create failed!\n");
-			return 1;
+			return;
 		}
 	}
-	for (i = 0; i < 2; i++) {
+	for (int i = 0; i < 2; i++) {
 		int fac = 1;
 		pthread_join(threads[i], NULL);
 	}
+}
+
+void printResults(int size)
+{
 	if (head != NULL)
 		head = NULL;
 	cout << endl << "0: " << k2 << "\n1: " << k1;
@@ -195,6 +198,21 @@ int main()
 		cout << endl << "all items are checked!";
 	}
 	else cout << endl << countItems1 + countItems2;
-	print();
+}
+
+void startApp() 
+{
+	srand((unsigned int)time(NULL));
+	int size = 5;
+	initList(size);
+	printList();
+	initThreads(size);
+	printResults(size);
+	printList();
+}
+
+int main()
+{
+	startApp();
 	return 0;
 }
